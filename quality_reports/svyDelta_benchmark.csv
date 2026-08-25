@@ -1,0 +1,9 @@
+"metric","value"
+"comparison_cases",10
+"max_abs_numeric_difference",0
+"structure_identical",1
+"upstream_median_seconds_latest",1.23
+"candidate_median_seconds_latest",0.76
+"speedup_latest",1.61842105263158
+"speedup_min_observed",1.18279569892473
+"speedup_max_observed",1.61842105263158

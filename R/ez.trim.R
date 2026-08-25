@@ -30,7 +30,7 @@ function (design, formula, population,
     else if (!inherits(trimfun, "trimfun"))
         stop("'trimfun' must be a string or of class 'trimfun'.")
 
-    mm <- model.matrix(formula, model.frame(formula, data = design$variables))
+    mm <- .rg.model.matrix(formula, model.frame(formula, data = design$variables))
     ww <- design$dir.weights
     # Heteroskedsticity
     if (is.null(sigma2)) {

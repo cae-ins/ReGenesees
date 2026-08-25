@@ -126,7 +126,7 @@ function (design, df.population,
     mk.ecal.status <- function(df.population,partition,partition.names=NULL){
     ############################################################
     #  Diagnostica sul processo di calibrazione.               #
-    #  Crea nel .GlobalEnv la lista a 2/3 componenti           #
+    #  Crea localmente la lista a 2/3 componenti               #
     #  'ecal.status':                                          #
     #  - 'call':                                               #
     #    identifica la chiamata di e.calibrate che ha          #
@@ -147,19 +147,16 @@ function (design, df.population,
         rownam <- "code"
         colnam <- if (identical(partition,FALSE)) "global" else partition.names
         ret.cod <- matrix(-1, nrow = tasks, ncol = parts, dimnames = list(rownam, colnam))
-        if   (directly) {
-               # assign("ecal.status", list(call = sys.call(-1), return.code = ret.cod), envir = .GlobalEnv)
-               assign2GE("ecal.status", list(call = sys.call(-1), return.code = ret.cod))
-              }
-        else  {
-               # assign("ecal.status", list(return.code = ret.cod), envir = .GlobalEnv)
-               assign2GE("ecal.status", list(return.code = ret.cod))
-              }
+        ecal.status <- if (directly) {
+                           list(call = sys.call(-1), return.code = ret.cod)
+                       } else {
+                           list(return.code = ret.cod)
+                       }
     }
     upd.ecal.status <- function(n.sub.task,code){
     ###############################################
     #  Aggiorna la lista 'ecal.status' nel        #
-    #  .GlobalEnv con il codice 'code' ritornato  #
+    #  nell'ambiente della funzione col codice 'code' ritornato #
     #  dal sub-task di ordine 'n.subtask' e, se   #
     #  code=1, con i dati diagnostici.            #
     ###############################################
@@ -260,7 +257,7 @@ function (design, df.population,
     #####################################################
         check.totals(df.population)
         N.cal.constr <- ncol(df.population)
-        mk.ecal.status(df.population,partition)
+        ecal.status <- mk.ecal.status(df.population,partition)
         qr.list <- vector("list", length = 1)
         names(qr.list) <- "population"
         gc.here(need.gc)
@@ -288,7 +285,7 @@ function (design, df.population,
         na.Fail(e.df, partition.vars)
         N.cal.constr <- prod(nrow(df.population), ncol(df.population)- length(partition.vars))
         partition.names <- apply(df.population[,partition.vars,drop=FALSE],1,paste,collapse=".")
-        mk.ecal.status(df.population,partition,partition.names)
+        ecal.status <- mk.ecal.status(df.population,partition,partition.names)
         #  'interact': factor i cui livelli identificano le partizioni
         interact <- interaction(e.df[, rev(partition.vars), drop = FALSE], drop=TRUE)
         #  'groups': lista che contiene gli indici di riga delle osservazioni nelle diverse partizioni
@@ -361,7 +358,7 @@ if (is.ext.cal(design)) {
 #### REMOVE TOKENS TESTIFYING PREVIOUS WEIGHTS ADJUSTMENTS (if any) -- STOP
 
 # Add calibration diagnostics
-attr(design, "ecal.status") <- s <- get("ecal.status", envir = .GlobalEnv)
+attr(design, "ecal.status") <- s <- ecal.status
 attr(design, "epsilon") <- epsilon
 attr(design, "N.cal.constr") <- N.cal.constr
 failed <- any(s$return.code != 0)
@@ -431,5 +428,6 @@ else {
     class(design) <- c("cal.analytic", class(design))
     gc.here(need.gc)
     }
+attr(design, "ecal.status") <- ecal.status
 design
 }

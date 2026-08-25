@@ -1,3 +1,11 @@
 ^README\.Rmd$
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^tools$
+^quality_reports$
+^\.github$
+^NOTICE\.md$
+^docs$
+^ReGenesees\.pdf$
+^ReGenesees_LOGO_small\.png$
+^LICENSE$

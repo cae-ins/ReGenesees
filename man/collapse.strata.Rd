@@ -35,9 +35,9 @@ The \code{collapse.strata} function correctly handles finite population correcti
 }
 
 \section{Strata Collapse Process Diagnostics}{
-As already observed in \sQuote{Details}, there are three non-trivial reasons why function \code{collapse.strata} can run into errors: (1) the blocks cut across strata, (2) some blocks contain a stratum needing to be aggregated while this stratum happens to be the only one inside the block, (3) the similarity score for strata aggregation varies inside strata. In order to help the user to identify such data anomalies, thus taking a first step towards eliminating them, every call to \code{collapse.strata} generates, by side effect, a diagnostics data structure named \code{clps.strata.status} in the \code{.GlobalEnv} (see \sQuote{Examples}).
+As already observed in \sQuote{Details}, there are three non-trivial reasons why function \code{collapse.strata} can run into errors: (1) the blocks cut across strata, (2) some blocks contain a stratum needing to be aggregated while this stratum happens to be the only one inside the block, (3) the similarity score for strata aggregation varies inside strata. To help identify such anomalies, a successful call stores \code{clps.strata.status} as an attribute of the returned design. On error, the same diagnostics are attached to the error condition. No object is written into \code{.GlobalEnv}.
 
-The \code{clps.strata.status} list has three components: the first reports the error message, the second stores a vector identifying the data subsets that have been hit by the anomaly, the third reports the call to \code{collapse.strata} that generated the list. For instance, when error condition (1) holds, the second element of \code{clps.strata.status} identifies the strata that are cut by blocks; if, instead, error condition (2) holds, the second element of the list identifies the blocks containing non-aggregable strata.
+The \code{clps.strata.status} list has three components: the first reports the error message, the second stores a vector identifying the data subsets that have been hit by the anomaly, the third reports the call to \code{collapse.strata} that generated the list. On error it can be retrieved with \code{tryCatch(call, error = function(e) attr(e, "clps.strata.status"))}.
 
 It must be stressed that \emph{every call} to \code{collapse.strata} generates the \code{clps.strata.status} list, \emph{even} when the strata collapsing process ends \emph{successfully}. In such cases, the first element of the list reports the number of lonely strata that have undergone aggregation, whereas the second is a useful data frame (named \code{clps.table}) mapping collapsed strata to superstrata. To be more specific: each row of \code{clps.table} identifies a stratum that has been mapped to a superstratum, while the columns of \code{clps.table} give: (i) the block to which the stratum belongs, (ii) the stratum name, (iii) a flag indicating if the stratum was lonely or not, (iv) the name of the superstratum to which it has been mapped.
 }
@@ -161,7 +161,7 @@ stat.ave
   # ...and readily be used to drive the strata collapsing:
     fpcdes.clps<-collapse.strata(fpcdes,sim.score=~score)
     fpcdes.clps
-    clps.strata.status
+    attr(fpcdes.clps, "clps.strata.status")
 
   # As we expected from the groups defined by pl.domain, lonely stratum S.2
   # has been paired to S.3, and lonely stratum S.5 to S.4.
@@ -170,7 +170,7 @@ stat.ave
   # obtained different superstrata:
     fpcdes.clps2<-collapse.strata(fpcdes)
     fpcdes.clps2
-    clps.strata.status
+    attr(fpcdes.clps2, "clps.strata.status")
 
 
 #################################################################
@@ -182,16 +182,18 @@ stat.ave
 \dontrun{
 clps.err1 <- collapse.strata(exdes,~sex)
 }
-clps.strata.status
+tryCatch(collapse.strata(exdes,~sex),
+         error = function(e) attr(e, "clps.strata.status"))
 
   # 2) Ill defined blocks: generating non-aggregable strata
 \dontrun{
 clps.err2 <- collapse.strata(exdes,~regcod:stratum)
 }
-clps.strata.status
+tryCatch(collapse.strata(exdes,~regcod:stratum),
+         error = function(e) attr(e, "clps.strata.status"))
 
   # 3) Successful collapsing: explore strata to superstrata mapping
 exdes.ok <- collapse.strata(exdes, ~sr:regcod:procod)
-clps.strata.status
+attr(exdes.ok, "clps.strata.status")
 }
 \keyword{survey}

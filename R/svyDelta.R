@@ -115,7 +115,7 @@ if (des.INDEP) {
 ## Domain estimation
 na.rm <- FALSE  # Missing values are not handled
 if (!is.null(by)) {
-     stat <- svyby.svydelta(expr = expr, by = by, design1 = design1, design2 = design2,
+     stat <- .svyDelta_by(expr = expr, by = by, design1 = design1, design2 = design2,
                    has.strata = use.strata, is.element = is.element, are.indep = des.INDEP, no.strat.jump = rho.NOSTRATJUMP,
                    keep.names = TRUE, verbose = FALSE,
                    vartype = vartype, ci.lev = conf.lev,
@@ -128,7 +128,7 @@ if (!is.null(by)) {
     } else {
      design1 <- des.addvars(design1, FaKe.by = factor(1))
      design2 <- des.addvars(design2, FaKe.by = factor(1))
-     stat <- svyby.svydelta(expr = expr, by = ~FaKe.by, design1 = design1, design2 = design2,
+     stat <- .svyDelta_by(expr = expr, by = ~FaKe.by, design1 = design1, design2 = design2,
                    has.strata = use.strata, is.element = is.element, are.indep = des.INDEP, no.strat.jump = rho.NOSTRATJUMP,
                    keep.names = TRUE, verbose = FALSE,
                    vartype = vartype, ci.lev = conf.lev,
@@ -185,15 +185,37 @@ if (!is.null(by)) {
 
 ## Utility identify element vs cluster sampling designs
 `is.element` <- function(design) {
-     n <- NROW(design$cluster)
-     un <- length(unique(design$cluster[, 1]))
-     if (n == un) {
-         ans <- TRUE
-        } else {
-         ans <- FALSE
-        }
-     return(ans)
+     !anyDuplicated(design$cluster[, 1])
     }
+
+`.delta.rowsum` <- function(data, value.names, id.name, strata.name = NULL) {
+###########################################################################
+# Fast PSU aggregation for svydelta.  aggregate.data.frame repeatedly      #
+# splits every value column and carries formula/data-frame overhead.        #
+# rowsum performs the same grouped sums in one matrix pass.                 #
+###########################################################################
+    if (is.null(strata.name)) {
+        group <- data[[id.name]]
+    }
+    else {
+        group <- interaction(data[[strata.name]], data[[id.name]],
+                             drop = TRUE, lex.order = TRUE)
+    }
+    group.order <- unique(group)
+    first <- match(group.order, group)
+    totals <- rowsum(as.matrix(data[, value.names, drop = FALSE]),
+                     group = group, reorder = FALSE)
+    totals <- as.data.frame(totals, check.names = FALSE)
+    if (is.null(strata.name)) {
+        data.frame(id = data[[id.name]][first], totals,
+                   row.names = NULL, check.names = FALSE)
+    }
+    else {
+        data.frame(strata = data[[strata.name]][first],
+                   id = data[[id.name]][first], totals,
+                   row.names = NULL, check.names = FALSE)
+    }
+}
 
 ## Accessor functions for objects created by svyDelta
 `coef.svyDelta` <- function(object, ...){
@@ -263,7 +285,7 @@ if (!is.null(by)) {
 }
 
 
-`svyby.svydelta` <- function(expr, by, design1, design2, has.strata, is.element, are.indep, no.strat.jump, ..., 
+`.svyDelta_by` <- function(expr, by, design1, design2, has.strata, is.element, are.indep, no.strat.jump, ...,
                              keep.names=TRUE, verbose=FALSE,
                              vartype=c("se","ci","ci","cv","cvpct","var"), ci.lev=0.95,
                              drop.empty.groups=TRUE, covmat=FALSE){
@@ -301,10 +323,13 @@ if (!is.null(by)) {
         } 
      ## All common-domain sub-designs of design1
      uniques1 <- match(uniquelevels, byfactor1)
-#     designs1 <- lapply(uniques1, function(i) design1[byfactor1 %in% byfactor1[i], ])
      ## All common-domain sub-designs of design1
      uniques2 <- match(uniquelevels, byfactor2)
-#     designs2 <- lapply(uniques2, function(i) design2[byfactor2 %in% byfactor2[i], ])
+     ## Pre-compute row indices once. The previous implementation evaluated
+     ## `%in%` over each complete sample for every domain (O(n * domains)).
+     domain.keys <- as.character(uniquelevels)
+     rows1 <- split(seq_along(byfactor1), as.character(byfactor1), drop = TRUE)
+     rows2 <- split(seq_along(byfactor2), as.character(byfactor2), drop = TRUE)
 
   if(missing(vartype)) vartype <- "se"
   vartype <- match.arg(vartype,several.ok=TRUE)
@@ -319,37 +344,44 @@ if (!is.null(by)) {
      unwrap <-function(x){
         rval<-c(coef(x))
         nvar<-length(rval)
-        # variances piece by piece
-        se <- c(SE=SE(x))
-        ci.l <- confint(x, level=ci.lev)[,1]
-        names(ci.l) <- paste(ci.l.tag, names(rval), sep=".")
-        ci.u <- confint(x, level=ci.lev)[,2]
-        names(ci.u) <- paste(ci.u.tag, names(rval), sep=".")
-        cv <- c(CV=cv(x,warn=FALSE))
-        cvpct <- c(`CV%`=cv(x,warn=FALSE)*100)
-        var <- c(VAR=SE(x)^2)
-        # put variances together and keep only those requested
-        variances <- c(se, ci.l, ci.u, cv, cvpct, var)[rep((nvartype-1)*(nvar),each=nvar)+(1:nvar)]
+        # Compute only requested variability measures and cache shared inputs.
+        pieces <- vector("list", 6L)
+        if (any(nvartype %in% c(1L, 6L))) {
+            se.value <- SE(x)
+            pieces[[1L]] <- c(SE = se.value)
+            pieces[[6L]] <- c(VAR = se.value^2)
+        }
+        if (any(nvartype %in% c(2L, 3L))) {
+            ci <- confint(x, level = ci.lev)
+            pieces[[2L]] <- ci[, 1L]
+            names(pieces[[2L]]) <- paste(ci.l.tag, names(rval), sep = ".")
+            pieces[[3L]] <- ci[, 2L]
+            names(pieces[[3L]]) <- paste(ci.u.tag, names(rval), sep = ".")
+        }
+        if (any(nvartype %in% c(4L, 5L))) {
+            cv.value <- cv(x, warn = FALSE)
+            pieces[[4L]] <- c(CV = cv.value)
+            pieces[[5L]] <- c(`CV%` = cv.value * 100)
+        }
+        variances <- unlist(pieces[nvartype], use.names = TRUE)
         rval<-c(rval, variances)
         rval
     }
 
-      ## In dire need of refactoring (or rewriting)
-      ## but it seems to work.
-      results <- mapply(uniques1, uniques2,
-                        FUN = function(i, j){
-                                if(verbose) print(as.character(byfactor1[i]))
-                                svydelta(expr, design1[byfactor1 %in% byfactor1[i], ], design2[byfactor2 %in% byfactor2[j], ],
-                                         has.strata = has.strata, is.element = is.element, are.indep = are.indep, no.strat.jump = no.strat.jump, ...
-                                        )
-                            }, SIMPLIFY = FALSE
-                    )
+      results <- lapply(domain.keys, function(domain.key) {
+          if (verbose) print(domain.key)
+          svydelta(expr,
+                   design1[rows1[[domain.key]], ],
+                   design2[rows2[[domain.key]], ],
+                   has.strata = has.strata, is.element = is.element,
+                   are.indep = are.indep, no.strat.jump = no.strat.jump, ...)
+      })
 
       ## Get estimates and errors
-      rval<-t(sapply(results, unwrap))
+      rval<-do.call(rbind, lapply(results, unwrap))
 
       ## Get details data frames and rbind them
-      details <- Reduce(rbind, lapply(results, function(el) attr(el, "details")))
+      details <- do.call(rbind, lapply(results, function(el) attr(el, "details")))
       ## Add domain columns
       if (deparse(by) != "~FaKe.by") { 
              details <- cbind(byfactors1[uniques1,,drop=FALSE], details)
@@ -385,11 +417,12 @@ if (!is.null(by)) {
             }
         }
       # reorder rows
-      rval<-rval[order(byfactor1[uniques1]),]
-      details <- details[order(byfactor1[uniques1]), , drop = FALSE]
+      domain.order <- order(byfactor1[uniques1])
+      rval<-rval[domain.order,]
+      details <- details[domain.order, , drop = FALSE]
 
       if(covmat){
-        i<-expand.index(order(byfactor1[uniques1]),nstats)
+        i<-expand.index(domain.order,nstats)
         covmat.mat<-covmat.mat[i,i]
       }
   } else { # never the case in ReGenesees, in practice

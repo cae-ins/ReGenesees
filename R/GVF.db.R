@@ -125,13 +125,11 @@ GVF.db <- list(
                         }
                     #### If nothing wrong, insert
                        n <- NROW(GVF.db[["db"]])
-                       unlockBinding("GVF.db", getNamespace("ReGenesees"))
-                       GVF.db$db[n + 1, "Model.id"] <<- n + 1
-                       GVF.db$db[n + 1, "GVF.model"] <<- twosideform.to.char(GVF.model)
-                       GVF.db$db[n + 1, "Estimator.kind"] <<- Estimator.kind
-                       GVF.db$db[n + 1, "Resp.to.CV"] <<- Resp.to.CV
-                       rownames(GVF.db$db) <<- NULL
-                       lockBinding("GVF.db", getNamespace("ReGenesees"))
+                       GVF.db$db[n + 1, "Model.id"] <- n + 1
+                       GVF.db$db[n + 1, "GVF.model"] <- twosideform.to.char(GVF.model)
+                       GVF.db$db[n + 1, "Estimator.kind"] <- Estimator.kind
+                       GVF.db$db[n + 1, "Resp.to.CV"] <- Resp.to.CV
+                       rownames(GVF.db$db) <- NULL
                        # Notify, if needed
                        if (isTRUE(verbose)) cat("\n# New GVF model has been registered\n\n")
                     },
@@ -151,9 +149,7 @@ GVF.db <- list(
                            GVF.db.new$Model.id <- 1:n.new
                            rownames(GVF.db.new) <- NULL
                         }
-                       unlockBinding("GVF.db", getNamespace("ReGenesees"))
-                       GVF.db$db <<- GVF.db.new
-                       lockBinding("GVF.db", getNamespace("ReGenesees"))
+                       GVF.db$db <- GVF.db.new
                        # Notify, if needed
                        if (isTRUE(verbose)) cat("\n# GVF model has been deleted\n\n")
                     },
@@ -179,9 +175,7 @@ GVF.db <- list(
                        if (!inherits(value, "GVF.db_exported")) {
                            stop("Cannot overwrite GVF models db: invalid value")
                         }
-                       unlockBinding("GVF.db", getNamespace("ReGenesees"))
-                       GVF.db$db <<- value
-                       lockBinding("GVF.db", getNamespace("ReGenesees"))
+                       GVF.db$db <- value
                        # Notify, if needed
                        if (isTRUE(verbose)) cat("\n# GVF models db overwritten\n\n")
                     },
@@ -189,13 +183,15 @@ GVF.db <- list(
      # Reset the startup GVF db #
      ############################
      reset = function(verbose = TRUE) {
-                      unlockBinding("GVF.db", getNamespace("ReGenesees"))
-                      GVF.db$db <<- GVF.db.ini
-                      lockBinding("GVF.db", getNamespace("ReGenesees"))
+                      GVF.db$db <- GVF.db.ini
                       # Notify, if needed
                       if (isTRUE(verbose)) cat("\n# Default GVF models db restored\n\n")
                     }
     )
+
+# An environment provides mutable package-private state without unlocking the
+# namespace or using superassignment.  The public `$` API remains unchanged.
+GVF.db <- list2env(GVF.db, parent = emptyenv())
 
 class(GVF.db) <- c("GVF.db", class(GVF.db))
 

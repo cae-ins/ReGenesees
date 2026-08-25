@@ -50,7 +50,7 @@ The weights of all units are smoothed, by setting their value to the average wei
 
 In summary, both methods often lead to very similar smoothed weights for units that are stratum jumpers. However, method \code{'Beaumont'} smooths the weights of all other (i.e. \emph{non} stratum jumpers) units much more aggressively than method \code{'MinChange'} (which only minimally alters them in step 2. to preserve the overall sum of weights). Moreover, method \code{'MinChange'} treats stratum jumpers that grew in size and those that decreased in size on the same footing, whereas method \code{'Beaumont'} typically smooths the weights of the former more than those of the latter (owing to its minimum weight preservation constraint, see \sQuote{Examples}).
 
-Note that every call to \code{smooth.strat.jump} generates, by side effect, a diagnostics data structure named \code{strat.jump.status} in the \code{.GlobalEnv} (see \sQuote{Examples}). This is a data frame with one row for each stratum jumper unit, with the following columns:
+Every call to \code{smooth.strat.jump} stores a diagnostics data structure named \code{strat.jump.status} as an attribute of the returned design, without modifying \code{.GlobalEnv} (see \sQuote{Examples}). This is a data frame with one row for each stratum jumper unit, with the following columns:
 \preformatted{
   Column                 Meaning
   IDS....................Unit identifier
@@ -131,14 +131,14 @@ M.smooth
 head(M.smooth$variables)
 
 # Inspect the effects of smoothing on the stratum jumpers:
-strat.jump.status
+attr(M.smooth, "strat.jump.status")
 
 ## Method: Beaumont
 B.smooth <- smooth.strat.jump(BRdes, ~curr.strata, method = "Beaumont")
 B.smooth
 
 # Inspect the effects of smoothing on the stratum jumpers:
-strat.jump.status
+attr(B.smooth, "strat.jump.status")
 
 ## As anticipated, smoothed weights of stratum jumpers are mostly similar for
 ## both methods. However the methods differ significantly when it comes to non

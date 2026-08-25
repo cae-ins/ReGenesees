@@ -63,7 +63,7 @@ smooth.strat.jump <- function(design, curr.strata, method = c("MinChange", "Beau
 
 # First verify if the function has been called inside another function:
 # this is needed to correctly manage metadata when e.g. the caller is a
-# GUI stratum. (affects ONLY diagnostics written in the .GlobalEnv)
+# GUI stratum. (affects only diagnostic call metadata)
 directly <- !( length(sys.calls()) > 1 )
 
 # Restrict to un-calibrated designs
@@ -255,8 +255,9 @@ attr(design, "smoothing.method") <- method
 # Get the current call
 design$call <- sys.call() # MUST check the right way, for possible GUI development
 
-# Save the diagnostic data frame of stratum jumpers
-assign2GE("strat.jump.status", df.jumpers)
+# Save diagnostics on the returned object without modifying the user's global
+# environment.
+attr(design, "strat.jump.status") <- df.jumpers
 
 design
 }

@@ -68,7 +68,7 @@ data(fpcdat)
   # Apply the collapse strata technique:
     fpcdes.nofpc.clps<-collapse.strata(fpcdes.nofpc)
     fpcdes.nofpc.clps
-    clps.strata.status
+    attr(fpcdes.nofpc.clps, "clps.strata.status")
 
   # Find lonely strata:
     find.lon.strata(fpcdes.nofpc.clps)

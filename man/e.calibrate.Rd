@@ -1,7 +1,6 @@
 \name{e.calibrate}
 \alias{e.calibrate}
 \alias{cal.analytic}
-\alias{ecal.status}
 
 \title{Calibration of Survey Weights}
 
@@ -75,7 +74,7 @@ The calibrated weights computed by \code{e.calibrate} must ensure that the calib
 }
 
 \section{Calibration Process Diagnostics}{
-When the user selects the partitioned solution for a factorizable calibration problem, the global calibration problem gets split into as many \emph{sub-problems} as the number of subpopulations defined by \code{partition}. In turn, each one of these calibration sub-problems can end without convergence on any one of the involved auxiliary variables. A calibration process with such a complex structure needs some ad hoc tool for error diagnostics. For this purpose, every call to \code{e.calibrate} creates, by side effect, a dedicated data structure named \code{ecal.status} into the \code{.GlobalEnv}.
+When the user selects the partitioned solution for a factorizable calibration problem, the global calibration problem gets split into as many \emph{sub-problems} as the number of subpopulations defined by \code{partition}. In turn, each one of these calibration sub-problems can end without convergence on any one of the involved auxiliary variables. A calibration process with such a complex structure needs some ad hoc tool for error diagnostics. For this purpose, every call to \code{e.calibrate} stores a dedicated data structure named \code{ecal.status} in an attribute of the returned design, without modifying \code{.GlobalEnv}.
 
 \code{ecal.status} is a list with up to three components: the first, \code{"call"}, identifies the call to \code{e.calibrate} that generated the list, the second, \code{"return.code"}, is a matrix each element of which identifies the return code of a specific calibration sub-problem. The meaning of the return codes is as follows:
 \preformatted{
@@ -88,7 +87,7 @@ CODE        MEANING
 Recall that the latter return code (\code{1}) may only occur if \code{force = TRUE}.\cr
 If any \code{return.code} equal to \code{1} exists, the \code{ecal.status} list gains a third component named \code{"fail.diagnostics"} which is itself a list; its components correspond to sub-problems for which convergence was not achieved, and store useful information about the auxiliary variables for which calibration constraints are violated. Therefore, users can exploit \code{ecal.status} to identify sub-problems and variables from which errors stemmed, thus taking a first step towards eliminating them.
 
-Notice, lastly, that the \code{ecal.status} list will also be persistently bound to the \code{e.calibrate} return object, stored inside a dedicated attribute. For the inspection of such diagnostics information the \code{\link{check.cal}} function is available.   
+The diagnostics can be retrieved with \code{attr(result, "ecal.status")}. For their routine inspection the \code{\link{check.cal}} function is available.
 }
 
 \value{
@@ -106,7 +105,7 @@ Deville, J.C., Sarndal, C.E. (1992) \emph{\dQuote{Calibration Estimators in Surv
 
 Deville, J.C., Sarndal, C.E., Sautory, O. (1993) \emph{\dQuote{Generalized Raking Procedures in Survey Sampling}}, Journal of the American Statistical Association, Vol. 88, No. 423, pp. 1013-1020.
 
-Zardetto, D. (2015) \emph{\dQuote{ReGenesees: an Advanced R System for Calibration, Estimation and Sampling Error Assessment in Complex Sample Surveys}}. Journal of Official Statistics, 31(2), 177-203. \doi{https://doi.org/10.1515/jos-2015-0013}.
+Zardetto, D. (2015) \emph{\dQuote{ReGenesees: an Advanced R System for Calibration, Estimation and Sampling Error Assessment in Complex Sample Surveys}}. Journal of Official Statistics, 31(2), 177-203. \doi{10.1515/jos-2015-0013}.
 
 Wilkinson, G.N., Rogers, C.E. (1973) \emph{\dQuote{Symbolic Description of Factorial Models for Analysis of Variance}}, Journal of the Royal Statistical Society, series C (Applied Statistics), Vol. 22, pp. 181-191.
 
@@ -256,8 +255,8 @@ approx.cal<-e.calibrate(design=des,df.population=pop05p,
 # constraints violation:
 check.cal(approx.cal)
 
-# ...or (equivalently) inspect directly ecal.status:
-ecal.status
+# ...or (equivalently) inspect its diagnostic attribute:
+attr(approx.cal, "ecal.status")
 
 
 #################################################

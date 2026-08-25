@@ -1,3 +1,36 @@
+# ReGenesees 2.5.1 (CAE-INS fork)
+
+* Added a hybrid calibration-system solver: fast Cholesky factorization for
+  regular positive-definite systems and a truncated-SVD fallback for
+  ill-conditioned or rank-deficient systems.
+
+* Added damped Newton steps to generalized raking and bounded calibration.
+  Backtracking now prevents non-finite steps and rejects steps that increase
+  the maximum normalized calibration residual.
+
+* Eliminated redundant calibration-function evaluations within Newton
+  iterations.
+
+* Vectorized the PSU aggregation and domain dispatch used by `svyDelta`, and
+  avoided computing unrequested variance measures. Ten upstream-comparison
+  scenarios remain numerically identical while the multi-domain benchmark is
+  about 1.37 times faster.
+
+* Extended the hybrid solver to the historical calibration and regression-
+  linearization paths, removed the now-unused MASS dependency, and made package
+  startup output exception-safe.
+
+* Removed writes to `.GlobalEnv`, namespace unlocking and session-wide contrast
+  changes. Diagnostics now travel with returned designs (or error conditions),
+  GVF state lives in a mutable environment, and factor encoding is package-local.
+
+* Added numerical regression tests, an upstream compatibility suite and
+  reproducible calibration benchmarks.
+
+* This derivative was modified by CAE-INS on 25 August 2026. It remains
+  licensed under the EUPL and is not represented as an official Istat or
+  upstream-author release.
+
 #  ReGenesees 2.5
 
 *  This version ensures a safe transition of ReGenesees to the "R 4.6.x" series.

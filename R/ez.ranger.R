@@ -6,7 +6,7 @@ function (design, formula, population)
 # totali noti e corrispondenti stime dirette.                 #
 ###############################################################
 {
-    mm <- model.matrix(formula, model.frame(formula, data = design$variables))
+    mm <- .rg.model.matrix(formula, model.frame(formula, data = design$variables))
     ww <- design$dir.weights
     sample.total <- colSums(mm * ww)
     if (length(sample.total) != length(population)) 

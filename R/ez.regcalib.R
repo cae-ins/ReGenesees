@@ -12,7 +12,7 @@ function (design, formula, population, aggregate.stage = NULL, sigma2 = NULL,
 #        when switching to ginv due to collinearity.                     #
 ##########################################################################
 {
-    mm <- model.matrix(formula, model.frame(formula, data = design$variables))
+    mm <- .rg.model.matrix(formula, model.frame(formula, data = design$variables))
     ww <- design$dir.weights
     # Heteroskedsticity
     if (is.null(sigma2)) {
@@ -58,13 +58,17 @@ function (design, formula, population, aggregate.stage = NULL, sigma2 = NULL,
     }
     g <- rep(1, NROW(mm))
     Tmat <- crossprod(mm * (whalf/sigma))
-    # Let's try a workaround for collinearity problems
-    tT <- try(solve(Tmat, population - sample.total), silent = TRUE)
-    if (collin <- inherits(tT, "try-error")) {
-        warning("Calibration system is singular: switching to Moore-Penrose generalized inverse.")
-        tT <- ginv(Tmat) %*% (population - sample.total)
+    # Fast Cholesky solve for regular systems, with a truncated-SVD fallback
+    # for ill-conditioned or rank-deficient calibration matrices.
+    tT <- .calibration.solve(Tmat, population - sample.total,
+                             tol = sqrt(.Machine$double.eps))
+    solver <- attr(tT, "solver")
+    solver.rank <- attr(tT, "rank")
+    collin <- identical(solver, "svd")
+    if (collin) {
+        warning("Calibration system is singular or ill-conditioned: switching to a truncated-SVD generalized inverse.")
     }
-    # done.
+    tT <- as.numeric(tT)
 
     g <- drop(1 + mm %*% tT/sigma2)
 
@@ -92,7 +96,7 @@ function (design, formula, population, aggregate.stage = NULL, sigma2 = NULL,
         worst.ind <- which.max(achieved)
         worst.achieved <- achieved[worst.ind]
         warning("Calibration failed: worst achieved epsilon= ", worst.achieved,
-                " (variable ",names(worst.achieved),"), see ecal.status.")
+                " (variable ",names(worst.achieved),"), see the 'ecal.status' attribute of the returned design.")
         # This is C2 when collin: unstable results may be due to ginv
         # and a viable alternative may be to resort to Newton-Raphson using 
         # very loose bounds, e.g. bounds=c(-1E12, 1E12)
@@ -145,5 +149,7 @@ function (design, formula, population, aggregate.stage = NULL, sigma2 = NULL,
     attr(cal.weights,"ret.code") <- ret.code
     fail.diagnostics <- if (ret.code==1) diagnosys
     attr(attr(cal.weights,"ret.code"), "fail.diagnostics") <- fail.diagnostics
+    attr(cal.weights,"solver") <- solver
+    attr(cal.weights,"solver.rank") <- solver.rank
     cal.weights
 }

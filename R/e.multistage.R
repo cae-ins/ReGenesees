@@ -222,17 +222,17 @@ onestrat<-function(x,cluster,nPSU,fpc, lonely.psu,stratum=NULL,stage=1,cal=cal){
     scale<-rep(scale[1],NROW(x))
   }
   if (lonely.psu!="adjust" || nsubset>1 ||
-      (nPSU>1 & !getOption("RG.adjust.domain.lonely"))) {
+      (nPSU>1 & !getOption("RG.adjust.domain.lonely", FALSE))) {
       stratum_center <- colMeans(x)
 	}
   x<-sweep(x, 2, stratum_center, "-")  # Centering in Y^hat / all_PSUs when the lonely.psu
                                        # option is "adjust"
 
   if (nsubset==1 && nPSU>1){
-      if (isTRUE(getOption("RG.warn.domain.lonely"))){
+      if (isTRUE(getOption("RG.warn.domain.lonely", FALSE))){
           warning("Stratum (",stratum,") has only one sampling unit at stage ",stage)
         }
-      if (lonely.psu=="average" && getOption("RG.adjust.domain.lonely")) {
+      if (lonely.psu=="average" && getOption("RG.adjust.domain.lonely", FALSE)) {
           scale<-NA
           is.lonely <- TRUE
         }
@@ -266,7 +266,7 @@ onestrat<-function(x,cluster,nPSU,fpc, lonely.psu,stratum=NULL,stage=1,cal=cal){
 }
 
 
-onestage<-function(x, strata, clusters, nPSU, fpc, lonely.psu=getOption("RG.lonely.psu"),stage=0, cal){
+onestage<-function(x, strata, clusters, nPSU, fpc, lonely.psu=getOption("RG.lonely.psu", "fail"),stage=0, cal){
 
 # NOTE: Lonely PSUs treatment under the "adjust" option revised as suggested by Practical
 #       Significance blog on 02/09/2022
@@ -307,8 +307,8 @@ onestage<-function(x, strata, clusters, nPSU, fpc, lonely.psu=getOption("RG.lone
 
 
 svyrecvar<-function(x, clusters,  stratas, fpcs, postStrata=NULL, design,
-                    lonely.psu=getOption("RG.lonely.psu"),
-                    one.stage=getOption("RG.ultimate.cluster")){
+                    lonely.psu=getOption("RG.lonely.psu", "fail"),
+                    one.stage=getOption("RG.ultimate.cluster", FALSE)){
 ####################################################################
 # MODIFIED version to accomodate cal.analytic object with their    #
 # iterated calibration technique.                                  #
@@ -318,7 +318,7 @@ svyrecvar<-function(x, clusters,  stratas, fpcs, postStrata=NULL, design,
 #       cal.analytic object.                                       #
 ####################################################################
 
-  if ( !getOption("RG.ultimate.cluster") && has.var.PSU(design) ){
+  if ( !getOption("RG.ultimate.cluster", FALSE) && has.var.PSU(design) ){
       one.stage <- TRUE
       #  warning("Ultimate Cluster Approximation assumed for variance estimation on this design!\n
       #           (despite this option isn't currently active, see ?ReGenesees.options)")
@@ -404,12 +404,12 @@ svyrecvar<-function(x, clusters,  stratas, fpcs, postStrata=NULL, design,
   }
   
   multistage(x, clusters,stratas,fpcs$sampsize, fpcs$popsize,
-             lonely.psu=getOption("RG.lonely.psu"),
+             lonely.psu=getOption("RG.lonely.psu", "fail"),
              one.stage=one.stage,stage=1,cal=cal)
 }
 
 multistage<-function(x, clusters,  stratas, nPSUs, fpcs,
-                    lonely.psu=getOption("RG.lonely.psu"),
+                    lonely.psu=getOption("RG.lonely.psu", "fail"),
                      one.stage=FALSE,stage,cal){
   
   n<-NROW(x)
@@ -825,7 +825,7 @@ as.svydesign2<-function(object){
           index<-is.finite(x$prob)
           psu<-!duplicated(x$cluster[index,1])
           tt<-table(x$strata[index,1][psu])
-          if (isTRUE(getOption("RG.warn.domain.lonely"))){
+          if (isTRUE(getOption("RG.warn.domain.lonely", FALSE))){
               if(any(tt==1)){
                  warning(sum(tt==1)," strata have only one PSU in this subset.")
                 }
@@ -873,7 +873,7 @@ as.svydesign2<-function(object){
           attr(x,"domain.index") <- which(index)
           psu<-!duplicated(x$cluster[index,1])
           tt<-table(x$strata[index,1][psu])
-          if (isTRUE(getOption("RG.warn.domain.lonely"))){
+          if (isTRUE(getOption("RG.warn.domain.lonely", FALSE))){
               if( any(tt==1) && (sum(index) < nrow(x)) ){
                  warning(sum(tt==1)," strata have only one PSU in this subset.")
                 }
@@ -900,7 +900,7 @@ svytotal.survey.design2<-function(x,design, na.rm=FALSE, deff=FALSE,...){
         mf<-model.frame(x,design$variables,na.action=na.pass)
         #PROVA! QUI CON MODIFICA POTREI TRATTARE FACTOR CON 1 SOLO LIVELLO!
         xx<-lapply(attr(terms(x),"variables")[-1],
-                   function(tt) model.matrix(eval(bquote(~0+.(tt))),mf))
+                   function(tt) .rg.model.matrix(eval(bquote(~0+.(tt))),mf))
         cols<-sapply(xx,NCOL)
         x<-matrix(nrow=NROW(xx[[1]]),ncol=sum(cols))
         scols<-c(0,cumsum(cols))
@@ -989,7 +989,7 @@ svytotal.cal.analytic<-function(x,design, na.rm=FALSE, deff=FALSE,...){
         ## do the right thing with factors
         mf<-model.frame(x,design$variables,na.action=na.pass)
         xx<-lapply(attr(terms(x),"variables")[-1],
-                   function(tt) model.matrix(eval(bquote(~0+.(tt))),mf))
+                   function(tt) .rg.model.matrix(eval(bquote(~0+.(tt))),mf))
         cols<-sapply(xx,NCOL)
         x<-matrix(nrow=NROW(xx[[1]]),ncol=sum(cols))
         scols<-c(0,cumsum(cols))
@@ -1094,7 +1094,7 @@ svymean.survey.design2<-function(x,design, na.rm=FALSE,deff=FALSE,...){
     ## do the right thing with factors
     mf<-model.frame(x,design$variables,na.action=na.pass)
     xx<-lapply(attr(terms(x),"variables")[-1],
-               function(tt) model.matrix(eval(bquote(~0+.(tt))),mf))
+               function(tt) .rg.model.matrix(eval(bquote(~0+.(tt))),mf))
     cols<-sapply(xx,NCOL)
     x<-matrix(nrow=NROW(xx[[1]]),ncol=sum(cols))
     scols<-c(0,cumsum(cols))
@@ -1182,7 +1182,7 @@ svymean.cal.analytic<-function(x,design, na.rm=FALSE,deff=FALSE,...){
     ## do the right thing with factors
     mf<-model.frame(x,design$variables,na.action=na.pass)
     xx<-lapply(attr(terms(x),"variables")[-1],
-               function(tt) model.matrix(eval(bquote(~0+.(tt))),mf))
+               function(tt) .rg.model.matrix(eval(bquote(~0+.(tt))),mf))
     cols<-sapply(xx,NCOL)
     x<-matrix(nrow=NROW(xx[[1]]),ncol=sum(cols))
     scols<-c(0,cumsum(cols))

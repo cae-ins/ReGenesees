@@ -18,16 +18,24 @@ Description: Design-Based and Model-Assisted analysis of complex sample surveys.
         population parameters, e.g. multiple regression coefficients.
         Generalized Variance Functions (GVF) method for predicting sampling variance
         estimates. Sample size requirements and power calculations.
-Version: 2.5
-Author: Diego Zardetto [aut, cre]
-Maintainer: Diego Zardetto <zardetto@istat.it>
-Authors@R: person("Diego", "Zardetto", role = c("aut", "cre"), email = "zardetto@istat.it")
-URL: https://diegozardetto.github.io/ReGenesees/,
+Version: 2.5.1
+Author: Diego Zardetto [aut], CAE-INS [cre, ctb], Thomas Lumley [cph]
+Maintainer: CAE-INS <cae-ins@users.noreply.github.com>
+Authors@R: c(
+    person("Diego", "Zardetto", role = "aut", email = "zardetto@istat.it"),
+    person("CAE-INS", role = c("cre", "ctb"),
+           email = "cae-ins@users.noreply.github.com"),
+    person("Thomas", "Lumley", role = "cph")
+    )
+URL: https://github.com/cae-ins/ReGenesees/,
+     https://diegozardetto.github.io/ReGenesees/,
      https://github.com/DiegoZardetto/ReGenesees/
-BugReports: https://github.com/DiegoZardetto/ReGenesees/issues/
-Copyright: Diego Zardetto and Thomas Lumley (for incorporating modified code
-           derived from early versions of the survey package).
+BugReports: https://github.com/cae-ins/ReGenesees/issues/
+Copyright: Diego Zardetto and Thomas Lumley (upstream code); CAE-INS (2026
+           modifications).
 License: EUPL
-Imports: stats, MASS
+Imports: stats
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
 Depends: R (>= 3.5.0)
 ByteCompile: TRUE

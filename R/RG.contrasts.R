@@ -27,21 +27,21 @@
 # ReGenesees user visible functions to switch off/on contrasts treatment
   # 1) ReGenesees STANDARD (i.e. no specific contrasts for ordered factors)
 `contrasts.RG` <- function(){
-  options("contrasts"=c(unordered="contr.treatment",ordered="contr.treatment"))
+  options("RG.contrasts"=c(unordered="contr.treatment",ordered="contr.treatment"))
   cat("\n# Standard ReGenesees contrasts treatment has been set:\n\n")
-  print(options("contrasts"))
+  print(options("RG.contrasts"))
 }
 
   # 2) SWITCH OFF (!!!! Da stats non viene trovata la funzione: MUST FIX !!!!!!)
 `contrasts.off` <- function(){
-  options("contrasts"=c(unordered="contr.off",ordered="contr.off"))
+  options("RG.contrasts"=c(unordered="contr.off",ordered="contr.off"))
   cat("\n# Contrasts treatment has been switched off:\n\n")
-  print(options("contrasts"))
+  print(options("RG.contrasts"))
 }
 
   # 3) RESTORE DEFAULTS  
 `contrasts.reset` <- function(){
-  options("contrasts"=c(unordered="contr.treatment",ordered="contr.poly"))
-  cat("\n# Factory-fresh defaults for contrasts treatment have been restored:\n\n")
-  print(options("contrasts"))
+  options("RG.contrasts"=NULL)
+  cat("\n# Package-local ReGenesees contrast defaults have been restored:\n\n")
+  print(.rg.option("RG.contrasts", c(unordered="contr.treatment",ordered="contr.treatment")))
 }
