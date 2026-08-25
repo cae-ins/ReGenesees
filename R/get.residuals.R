@@ -46,7 +46,7 @@ get.residuals <- function(cal.design, y, scale = c("no", "w", "d", "g"))
   # Build y matrix (do the right thing with factors)
   mf <- model.frame(y, cal.design$variables, na.action=na.pass)
   yy <- lapply(attr(terms(y),"variables")[-1],
-               function(tt) model.matrix(eval(bquote(~0+.(tt))),mf))
+               function(tt) .rg.model.matrix(eval(bquote(~0+.(tt))),mf))
   cols <- sapply(yy, NCOL)
   y <- matrix(nrow = NROW(yy[[1]]), ncol=sum(cols))
   scols <- c(0,cumsum(cols))

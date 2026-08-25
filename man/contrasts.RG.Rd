@@ -25,13 +25,13 @@ contr.off(n, base = 1, contrasts = TRUE, sparse = FALSE)
 \details{
 All the calibration facilities in package \pkg{ReGenesees} transform symbolic calibration models (as specified by the user via \code{calmodel}) into numeric model-matrices. Factor variables occurring in \code{calmodel} play a special role in such transformations, as the encoding of a factor can (and, by default, does) \emph{depend} on the \emph{structure} of the formula in which it occurs. The \pkg{ReGenesees} functions documented below control the way factor levels are translated into auxiliary variables and mapped to columns of population totals data frames. The underlying technical tools are \code{\link{contrasts}} handling functions (see \sQuote{Technical Remarks and Warnings} for further details).
 
-Under the calibration perspective, ordered and unordered factors appearing in \code{calmodel} must be treated the same way. This obvious constraint defines the \pkg{ReGenesees} default for contrasts handling. Such a default is silently set when loading the package. Moreover, you can set it also by calling \code{contrasts.RG()}. As can be understood by reading \sQuote{Technical Remarks and Warnings} below, the default setup can be seen as \strong{\dQuote{efficient-but-slightly-risky}}.
+Under the calibration perspective, ordered and unordered factors appearing in \code{calmodel} must be treated the same way. This constraint defines the \pkg{ReGenesees} default for contrasts handling. The CAE-INS version applies that default locally whenever it builds a model matrix, without modifying the session-wide \code{options("contrasts")}. You can set it explicitly by calling \code{contrasts.RG()}.
 
 A call to \code{contrasts.off()} simply disables all contrasts and imposes a complete dummy coding of factors. Under this setup, all levels of factors occurring in \code{calmodel} generate a distinct model-matrix column, \emph{even if some of these columns can be linearly dependent}. To be very concise, the \code{contrasts.off()} setup can be seen as \strong{\dQuote{safe-but-less-efficient}} as compared to the default one (read \sQuote{Technical Remarks and Warnings} for more details).
 
 Function \code{contr.off} is not meant to be called directly by users: it serves only the purpose of enabling the \code{contrasts.off()} setup.
 
-A call to \code{contrasts.reset()} restores \R factory-fresh defaults for contrasts (which do distinguish ordered and unordered factors). Users may want to use this function after having completed a \pkg{ReGenesees} session, e.g. before switching to other \R functions relying on contrasts (such as \code{\link{lm}}, \code{\link{glm}}, \ldots).
+A call to \code{contrasts.reset()} removes any user override of the package-local \code{RG.contrasts} option and restores the ReGenesees default. Other \R functions such as \code{\link{lm}} and \code{\link{glm}} are unaffected by all three ReGenesees contrast helpers.
 }
 \section{Technical Remarks and Warnings}{
 
@@ -62,9 +62,9 @@ Chambers, J. M. and Hastie, T. J. (1992) \emph{Statistical models}. Chapter 2 of
 # Easy things first: #
 ######################
 
-  # 1) When ReGenesees is loaded, its standard way of handling contrasts
-  #    (i.e. no ordered-unordered factor distinction) is silently set:
-options("contrasts")
+  # 1) ReGenesees uses a package-local contrast option and leaves the
+  #    session-wide options("contrasts") unchanged:
+getOption("RG.contrasts", c(unordered="contr.treatment", ordered="contr.treatment"))
 
   # 2) To switch off contrasts (i.e. apply always dummy coding to factors),
   #    simply type:
@@ -98,7 +98,7 @@ sbsdes<-e.svydesign(data=sbs,ids=~id,strata=~strata,weights=~weight,fpc=~fpc)
   # 1) ReGenesees default: contrasts ON. #
   ########################################
   # As you see contrasts are ON:
-  options("contrasts")
+  getOption("RG.contrasts", c(unordered="contr.treatment", ordered="contr.treatment"))
 
   # Build and fill the population totals template:
   temp1<-pop.template(data=sbsdes,calmodel=~region+dom3-1)

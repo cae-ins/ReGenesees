@@ -247,7 +247,7 @@ for (i in 1:n.mod) {
      mf <- model.frame(model, data = design$variables, na.action = na.fail)[group, , drop = FALSE]
      # 2. Model matrix
      #    NOTE: No NAs are allowed in model variables!
-     mm <- model.matrix(model, data = mf, na.action = na.fail)
+     mm <- .rg.model.matrix(model, data = mf, na.action = na.fail)
      # 3. Model response
        # get the values
      resp <- model.response(mf)
@@ -306,16 +306,10 @@ for (i in 1:n.mod) {
 
      # Compute (generalized, if needed) inverse of t(X)%*%W%*%X
      T <- crossprod(mm.whalf)
-     Tm1 <- try(solve(T), silent = TRUE)
-
-     # Residual collinearity after aliasing (this should happen only
-     # for numerical reasons...)
-     if (collin.res <- inherits(Tm1, "try-error")) {
-          warning("Model matrix is singular: switching to Moore-Penrose generalized inverse.")
-          ## No longer needed: ReGenesees now IMPORTS MASS
-          # require(MASS)
-          Tm1 <- ginv(T)
-        }
+     Tm1 <- .calibration.solve(T, diag(NROW(T)),
+                               tol = sqrt(.Machine$double.eps))
+     if (identical(attr(Tm1, "solver"), "svd"))
+          warning("Model matrix is singular or ill-conditioned: using a truncated-SVD generalized inverse.")
 
      # Consistency checks on mm and Beta
 

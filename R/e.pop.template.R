@@ -52,7 +52,7 @@ function (data, calmodel, partition = FALSE)
         stop("Parameter 'calmodel' must be supplied as a formula")
     calmodel.vars <- all.vars(calmodel)
     na.Fail(data, calmodel.vars)
-    cal.mm <- model.matrix(calmodel, model.frame(calmodel, data[1, ])) # 4 'pop.desc' #
+    cal.mm <- .rg.model.matrix(calmodel, model.frame(calmodel, data[1, ])) # 4 'pop.desc' #
     calmodel.names <- colnames(cal.mm)
 
     partition.expr <- FALSE

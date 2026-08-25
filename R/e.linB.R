@@ -46,7 +46,7 @@ if (!all(typetest))
 # 1. Model frame
 mf <- model.frame(model, data = design$variables, na.action = na.pass)
 # 2. Model matrix
-mm <- model.matrix(model, data = mf, na.action = na.pass)
+mm <- .rg.model.matrix(model, data = mf, na.action = na.pass)
 # 3. Model response
   # get
 resp <- model.response(mf)
@@ -120,16 +120,10 @@ if (N.nas > 0){
 
          # Compute (generalized, if needed) inverse of t(X)%*%W%*%X
          T.r <- crossprod(mm.whalf.r)
-         Tm1.r <- try(solve(T.r), silent = TRUE)
-
-         # Residual collinearity after aliasing (this should happen only
-         # for numerical reasons...)
-         if (collin.res <- inherits(Tm1.r, "try-error")) {
-             warning("Model matrix is singular: switching to Moore-Penrose generalized inverse.")
-             ## No longer needed: ReGenesees now IMPORTS MASS
-             # require(MASS)
-             Tm1.r <- ginv(T.r)
-            }
+         Tm1.r <- .calibration.solve(T.r, diag(NROW(T.r)),
+                                     tol = sqrt(.Machine$double.eps))
+         if (identical(attr(Tm1.r, "solver"), "svd"))
+             warning("Model matrix is singular or ill-conditioned: using a truncated-SVD generalized inverse.")
 
          # Compute Beta Woodruff transform (see my notes on paper)
          z.Beta.r <- tcrossprod(mm.r * as.numeric(ee.r), Tm1.r)
@@ -179,16 +173,10 @@ else{
 
      # Compute (generalized, if needed) inverse of t(X)%*%W%*%X
      T <- crossprod(mm.whalf)
-     Tm1 <- try(solve(T), silent = TRUE)
-
-     # Residual collinearity after aliasing (this should happen only
-     # for numerical reasons...)
-     if (collin.res <- inherits(Tm1, "try-error")) {
-         warning("Model matrix is singular: switching to Moore-Penrose generalized inverse.")
-         ## No longer needed: ReGenesees now IMPORTS MASS
-         # require(MASS)
-         Tm1 <- ginv(T)
-        }
+     Tm1 <- .calibration.solve(T, diag(NROW(T)),
+                               tol = sqrt(.Machine$double.eps))
+     if (identical(attr(Tm1, "solver"), "svd"))
+         warning("Model matrix is singular or ill-conditioned: using a truncated-SVD generalized inverse.")
 
      # Compute Beta Woodruff transform
      z.Beta <- tcrossprod(mm * as.numeric(ee), Tm1)

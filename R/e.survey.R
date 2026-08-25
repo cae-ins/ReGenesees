@@ -425,7 +425,7 @@ postStratify.survey.design<-function(design, strata, population, partial=FALSE,.
 
 # |> DEFUNCT <| #
 svyCprod<-function(x, strata, psu, fpc, nPSU, certainty=NULL, postStrata=NULL,
-                   lonely.psu=getOption("RG.lonely.psu")){
+                   lonely.psu=getOption("RG.lonely.psu", "fail")){
 # FUN.ACCUMULATOR( FUN = deparse(match.call()[[1]]) )
 
   x<-as.matrix(x)
@@ -555,7 +555,7 @@ svymean.survey.design<-function(x,design, na.rm=FALSE,deff=FALSE,...){
     ## do the right thing with factors
     mf<-model.frame(x,design$variables,na.action=na.pass)
     xx<-lapply(attr(terms(x),"variables")[-1],
-               function(tt) model.matrix(eval(bquote(~0+.(tt))),mf))
+               function(tt) .rg.model.matrix(eval(bquote(~0+.(tt))),mf))
     cols<-sapply(xx,NCOL)
     x<-matrix(nrow=NROW(xx[[1]]),ncol=sum(cols))
     scols<-c(0,cumsum(cols))
@@ -693,7 +693,7 @@ svytotal.survey.design<-function(x,design, na.rm=FALSE, deff=FALSE,...){
     ## do the right thing with factors
     mf<-model.frame(x,design$variables,na.action=na.pass)
     xx<-lapply(attr(terms(x),"variables")[-1],
-               function(tt) model.matrix(eval(bquote(~0+.(tt))),mf))
+               function(tt) .rg.model.matrix(eval(bquote(~0+.(tt))),mf))
     cols<-sapply(xx,NCOL)
     x<-matrix(nrow=NROW(xx[[1]]),ncol=sum(cols))
     scols<-c(0,cumsum(cols))

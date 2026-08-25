@@ -92,9 +92,7 @@ descal06p<-e.calibrate(design=des,df.population=pop06p,
 # the population total of variable age5c5 (i.e. the fifth
 # age class frequency) was not matched.
 
-# By analysing ecal.status one understands that calibration
-# failed due to the sub-task identified by procod 30:
-ecal.status
+# A forced calibration stores diagnostics on its returned object.
 
 # this is easily explained by inspecting the "bounds"
 # attribute of the bounds.hint output object:
@@ -110,8 +108,8 @@ descal06p.forced<-e.calibrate(design=des,df.population=pop06p,
                   bounds=c(0.62,1.50),aggregate.stage=2,force=TRUE)
 
 # Notice, also, that forced sub-tasks can be tracked down by
-# directly looking at ecal.status...
-ecal.status
+# directly looking at its diagnostic attribute...
+attr(descal06p.forced, "ecal.status")
 
 # ...or by using function check.cal:
 check.cal(descal06p.forced)

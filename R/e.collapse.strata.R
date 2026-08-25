@@ -16,6 +16,12 @@ collapse.strata <- function(design, block.vars = NULL, sim.score = NULL){
 # GUI stratum. (affects ONLY clps.strata.status)
 directly <- !( length(sys.calls()) > 1 )
 this.call <- sys.call()
+.collapse.condition <- function(message, diagnostics) {
+    if (directly) diagnostics$call <- this.call
+    condition <- simpleError(message)
+    attr(condition, "clps.strata.status") <- diagnostics
+    condition
+}
 
 if (!inherits(design, "analytic")) 
     stop("Design object must be of class analytic")
@@ -133,21 +139,8 @@ else {
      if (any(tab > 1)) {
          err.msg <- "Similarity score varies inside strata!"
          err.strata <- names(tab[tab > 1])
-         if (directly) {
-             # assign("clps.strata.status",
-             #        list(error = err.msg, ko.strata = err.strata, call = this.call),
-             #        envir = .GlobalEnv)
-             assign2GE("clps.strata.status",
-                       list(error = err.msg, ko.strata = err.strata, call = this.call))
-            }
-         else {
-             # assign("clps.strata.status",
-             #        list(error = err.msg, ko.strata = err.strata),
-             #        envir = .GlobalEnv)
-             assign2GE("clps.strata.status",
-                       list(error = err.msg, ko.strata = err.strata))
-            }
-         stop(err.msg)
+         stop(.collapse.condition(err.msg,
+                                  list(error = err.msg, ko.strata = err.strata)))
         }
     }
 
@@ -163,21 +156,8 @@ else {
      if (any(tab > 1)) {
          err.msg <- "Blocks cut across strata!"
          err.strata <- names(tab[tab > 1])
-         if (directly) {
-             # assign("clps.strata.status",
-             #        list(error = err.msg, ko.strata = err.strata, call = this.call),
-             #             envir = .GlobalEnv)
-             assign2GE("clps.strata.status",
-                       list(error = err.msg, ko.strata = err.strata, call = this.call))
-            }
-         else {
-             # assign("clps.strata.status",
-             #        list(error = err.msg, ko.strata = err.strata),
-             #        envir = .GlobalEnv)
-             assign2GE("clps.strata.status",
-                       list(error = err.msg, ko.strata = err.strata))
-            }
-         stop(err.msg)
+         stop(.collapse.condition(err.msg,
+                                  list(error = err.msg, ko.strata = err.strata)))
         }
     }
 
@@ -191,21 +171,8 @@ check <- sapply(strata.blocks, function(bl) length(bl)==1)
 if (any(check)) {
      err.msg <- "Some blocks contain just a single stratum: cannot collapse it!"
      err.blocks <- names(check[check])
-     if (directly) {
-         # assign("clps.strata.status",
-         #        list(error = err.msg, ko.blocks = err.blocks, call = this.call),
-         #        envir = .GlobalEnv)
-         assign2GE("clps.strata.status",
-                   list(error = err.msg, ko.blocks = err.blocks, call = this.call))
-        }
-     else {
-         # assign("clps.strata.status",
-         #        list(error = err.msg, ko.blocks = err.blocks),
-         #        envir = .GlobalEnv)
-         assign2GE("clps.strata.status",
-                   list(error = err.msg, ko.blocks = err.blocks))
-        }
-     stop(err.msg)
+     stop(.collapse.condition(err.msg,
+                              list(error = err.msg, ko.blocks = err.blocks)))
     }
 
 lonely.blocks <- lapply(strata.blocks, function(bl) lonely[lonely %in% bl])
@@ -383,20 +350,8 @@ rownames(clps.table) <- NULL
 
 msg <- paste("All lonely strata (", length(des.lonelies), ") successfully collapsed!", sep="")
 cat(paste("\n# ", msg, "\n\n", sep=""))
-if (directly) {
-     # assign("clps.strata.status",
-     #        list(message = msg, clps.table = clps.table, call = this.call),
-     #        envir = .GlobalEnv)
-     assign2GE("clps.strata.status",
-               list(message = msg, clps.table = clps.table, call = this.call))
-    }
-else  {
-     # assign("clps.strata.status",
-     #        list(message = msg, clps.table = clps.table),
-     #        envir = .GlobalEnv)
-     assign2GE("clps.strata.status",
-               list(message = msg, clps.table = clps.table))
-    }
+clps.strata.status <- list(message = msg, clps.table = clps.table)
+if (directly) clps.strata.status$call <- this.call
 
 ## 6) ENDS
 
@@ -405,5 +360,6 @@ if (is.null(sim.score))
     warning("No similarity score specified: achieved strata aggregation depends on the ordering of sample data")
 
 attr(design,"collapse.strata") <- this.call
+attr(design,"clps.strata.status") <- clps.strata.status
 design
 }

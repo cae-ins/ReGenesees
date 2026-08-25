@@ -24,7 +24,7 @@ z.svytotal.survey.design2<-function(x,design, na.rm=FALSE, deff=FALSE,...){
         ## do the right thing with factors
         mf<-model.frame(x,design$variables,na.action=na.pass)
         xx<-lapply(attr(terms(x),"variables")[-1],
-                   function(tt) model.matrix(eval(bquote(~0+.(tt))),mf))
+                   function(tt) .rg.model.matrix(eval(bquote(~0+.(tt))),mf))
         cols<-sapply(xx,NCOL)
         x<-matrix(nrow=NROW(xx[[1]]),ncol=sum(cols))
         scols<-c(0,cumsum(cols))

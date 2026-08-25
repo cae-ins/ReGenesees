@@ -108,7 +108,7 @@ Diego Zardetto
 }
 
 \references{
-UNICEF (2023) MICS7 TOOLS. URL: \url{https://mics.unicef.org/tools#survey-design}.
+UNICEF (2023) MICS7 sampling tools.
 
 ILO (2014a) ILO-IPEC TOOLS. URL: \url{https://www.ilo.org/resource/training-material/interactive-tools-sampling-household-based-child-labour-surveys}.
 

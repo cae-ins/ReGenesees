@@ -1,4 +1,4 @@
-import(stats, MASS)
+import(stats)
 
 importFrom("grDevices", "dev.flush", "dev.hold", "dev.new",
            "devAskNewPage", "extendrange")
@@ -6,7 +6,7 @@ importFrom("grDevices", "dev.flush", "dev.hold", "dev.new",
 importFrom("graphics", "abline", "identify", "mtext", "panel.smooth",
            "par", "plot", "strheight", "text", "arrows", "axis", "barplot", "points")
 
-importFrom("utils", "combn", "memory.limit", "object.size", "str", "head")
+importFrom("utils", "capture.output", "combn", "object.size", "str", "head")
 
 export(e.svydesign, e.calibrate, pop.template, population.check, svystatTM, svystatR, svystatQ, svystatL,
 svystatB, write.svystat, SE, VAR, cv, deff, des.addvars, bounds.hint, g.range, "%into%", collapse.strata,

@@ -40,7 +40,7 @@ function (design, formula, population, aggregate.stage = NULL, sigma2 = NULL,
             logit = cal.logit)
     else if (!inherits(calfun, "calfun"))
         stop("'calfun' must be a string or of class 'calfun'.")
-    mm <- model.matrix(formula, model.frame(formula, data = design$variables))
+    mm <- .rg.model.matrix(formula, model.frame(formula, data = design$variables))
     ww <- design$dir.weights
     # Heteroskedsticity
     if (is.null(sigma2)) {

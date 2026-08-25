@@ -145,7 +145,7 @@ function(design,
     #  Global calibration  #
     ########################
         if (!need.fetch){
-            mm <- model.matrix(calmodel, model.frame(calmodel, data = dataset))
+            mm <- .rg.model.matrix(calmodel, model.frame(calmodel, data = dataset))
             ww <- dataset[, weights.char]
             template[,] <- colSums(mm * ww)
         }
@@ -157,7 +157,7 @@ function(design,
             # Initialize template total to zero
             template[,] <- 0
             for (ch in chunks) {
-                mm.ch <- model.matrix(calmodel, model.frame(calmodel, data = dataset[ch, , drop = FALSE]))
+                mm.ch <- .rg.model.matrix(calmodel, model.frame(calmodel, data = dataset[ch, , drop = FALSE]))
                 ww.ch <- dataset[ch, weights.char]
                 template[,] <- template[,] + colSums(mm.ch * ww.ch)
             }
@@ -180,7 +180,7 @@ function(design,
             i.g <- 0
             for (g in groups) {
                 i.g <- i.g+1
-                mm.g <- model.matrix(calmodel, model.frame(calmodel, data = dataset[g, , drop = FALSE]))
+                mm.g <- .rg.model.matrix(calmodel, model.frame(calmodel, data = dataset[g, , drop = FALSE]))
                 ww.g <- dataset[g, weights.char]
                 template[partition.names == group.names[i.g],
                          which(!(names(template) %in% partition.vars))] <- colSums(mm.g * ww.g)
@@ -206,7 +206,7 @@ function(design,
                 i.g <- 0
                 for (g in groups.ch) {
                     i.g <- i.g+1
-                    mm.g <- model.matrix(calmodel, model.frame(calmodel, data = dataset.ch[g, , drop = FALSE]))
+                    mm.g <- .rg.model.matrix(calmodel, model.frame(calmodel, data = dataset.ch[g, , drop = FALSE]))
                     ww.g <- dataset.ch[g, weights.char]
                     template[partition.names == group.names.ch[i.g], aux.ind] <-
                     template[partition.names == group.names.ch[i.g], aux.ind] + colSums(mm.g * ww.g)

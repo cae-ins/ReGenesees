@@ -1,0 +1,12 @@
+"metric","value"
+"solver_legacy_ms",5.33333333333333
+"solver_modern_ms",2
+"solver_speedup",2.66666666666667
+"grake_legacy_s",0.83
+"grake_modern_s",0.77
+"grake_speedup",1.07792207792208
+"grake_max_abs_weight_difference",2.22044604925031e-16
+"grake_max_relative_constraint_error",4.265511e-12
+"stress_legacy_converged",0
+"stress_modern_converged",1
+"stress_modern_step_halvings",22

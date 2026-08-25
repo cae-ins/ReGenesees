@@ -64,7 +64,7 @@ f.y.classes <- as.formula(paste("~", paste(c(y.char, classes.char), collapse = "
 
 # Build shares model matrix
 smf <- model.frame(f.y.classes, data = design$variables, na.action = na.pass)
-smm <- model.matrix(f.y.classes, data = smf)
+smm <- .rg.model.matrix(f.y.classes, data = smf)
 
 # If by == NULL, change smm colnames dropping 'y:'
 if (is.null(by)) 

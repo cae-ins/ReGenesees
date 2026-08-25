@@ -458,7 +458,7 @@ else {
      w.char <- form.to.char(weights)
      w.form <- as.formula(paste(w.char, "- 1"))
      mf <- model.frame(w.form, gvf.input, na.action = na.pass)
-     weights <- model.matrix(w.form, mf)
+     weights <- .rg.model.matrix(w.form, mf)
     }
 
 # Fit the provided gvf model(s)

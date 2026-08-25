@@ -93,7 +93,7 @@ function(universe, template, mem.frac = 10)
     #  Global calibration  #
     ########################
         if (!need.fetch){
-            mm <- model.matrix(calmodel, model.frame(calmodel, data = universe))
+            mm <- .rg.model.matrix(calmodel, model.frame(calmodel, data = universe))
             template[,] <- colSums(mm)
         }
         else {
@@ -104,7 +104,7 @@ function(universe, template, mem.frac = 10)
             # Initialize template total to zero
             template[,] <- 0
             for (ch in chunks) {
-                mm.ch <- model.matrix(calmodel, model.frame(calmodel, data = universe[ch, , drop = FALSE]))
+                mm.ch <- .rg.model.matrix(calmodel, model.frame(calmodel, data = universe[ch, , drop = FALSE]))
                 template[,] <- template[,] + colSums(mm.ch)
             }
         }
@@ -126,7 +126,7 @@ function(universe, template, mem.frac = 10)
             i.g <- 0
             for (g in groups) {
                 i.g <- i.g+1
-                mm.g <- model.matrix(calmodel, model.frame(calmodel, data = universe[g, , drop = FALSE]))
+                mm.g <- .rg.model.matrix(calmodel, model.frame(calmodel, data = universe[g, , drop = FALSE]))
                 template[partition.names == group.names[i.g],
                          which(!(names(template) %in% partition.vars))] <- colSums(mm.g)
             }
@@ -151,7 +151,7 @@ function(universe, template, mem.frac = 10)
                 i.g <- 0
                 for (g in groups.ch) {
                     i.g <- i.g+1
-                    mm.g <- model.matrix(calmodel, model.frame(calmodel, data = universe.ch[g, , drop = FALSE]))
+                    mm.g <- .rg.model.matrix(calmodel, model.frame(calmodel, data = universe.ch[g, , drop = FALSE]))
                     template[partition.names == group.names.ch[i.g], aux.ind] <-
                     template[partition.names == group.names.ch[i.g], aux.ind] + colSums(mm.g)
                 }

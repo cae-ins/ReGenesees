@@ -40,7 +40,7 @@ From a variance estimation perspective, the trimmed object returned by function 
 }
 
 \section{Trimming Process Diagnostics}{
-Function \code{trimcal} exploits a \emph{constrained} trimming algorithm to adjust the calibration weights so that (i) they fall within a bounded interval but (ii) still preserve all the calibration totals. \emph{When this task is unfeasible, the algorithm will fail}. As a consequence, the adjusted weights returned in the output object will respect the range restrictions set by \code{w.range}, but some of the calibration constraints will be broken. Exactly as for function \code{\link{e.calibrate}}, in order to assess the degree of violation of the calibration constraints introduced by trimming, the user can exploit function \code{\link{check.cal}} (or, equivalently, the diagnostic data structure \code{\link{ecal.status}} available in the \code{.GlobalEnv}).
+Function \code{trimcal} exploits a \emph{constrained} trimming algorithm to adjust the calibration weights so that (i) they fall within a bounded interval but (ii) still preserve all the calibration totals. \emph{When this task is unfeasible, the algorithm will fail}. As a consequence, the adjusted weights returned in the output object will respect the range restrictions set by \code{w.range}, but some of the calibration constraints will be broken. Exactly as for function \code{\link{e.calibrate}}, in order to assess the degree of violation of the calibration constraints introduced by trimming, the user can exploit function \code{\link{check.cal}} or inspect \code{attr(result, "ecal.status")}.
 }   
 
 \value{

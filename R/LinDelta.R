@@ -97,13 +97,9 @@ if (!all(typetest2))
 # Check for missing values in interest variables (one at a time, since only a
 # single estimator is involved)
 ## design1
-for (var in in.vars1){
-     NA.estvars(design = design1, estvars = var, draconian = TRUE)
-    }
+NA.estvars(design = design1, estvars = in.vars1, draconian = TRUE)
 ## design2
-for (var in in.vars2){
-     NA.estvars(design = design2, estvars = var, draconian = TRUE)
-    }
+NA.estvars(design = design2, estvars = in.vars2, draconian = TRUE)
 
 ## Extract from expr the "parameters" i.e. symbols NOT referencing design
 ## variables
@@ -334,20 +330,24 @@ data2$wy2 <- data2$y2 * data2$w2
 # data1
 if (!has.strata) {
    # data1 <- aggregate(. ~ id, data = data1, FUN = sum) # DEBUG: wrong col names
-     data1 <- aggregate(data1[, c("y1", "w1", "ones1", "wy1")], by = list(id = data1$id), FUN = sum)
+     data1 <- .delta.rowsum(data1, c("y1", "w1", "ones1", "wy1"), "id")
     } else {
    # data1 <- aggregate(. ~ strata1 + id, data = data1, FUN = sum) # DEBUG: wrong col names
-     data1 <- aggregate(data1[, c("y1", "w1", "ones1", "wy1")], by = list(strata1 = data1$strata1, id = data1$id), FUN = sum)
+     data1 <- .delta.rowsum(data1, c("y1", "w1", "ones1", "wy1"),
+                            "id", "strata1")
+     names(data1)[names(data1) == "strata"] <- "strata1"
     }
 colnames(data1)[colnames(data1) == "ones1"] <- "nPSU1"
 data1$ones1 <- 1
 # data2
 if (!has.strata) {
    # data2 <- aggregate(. ~ id, data = data2, FUN = sum) # DEBUG: wrong col names
-     data2 <- aggregate(data2[, c("y2", "w2", "ones2", "wy2")], by = list(id = data2$id), FUN = sum)
+     data2 <- .delta.rowsum(data2, c("y2", "w2", "ones2", "wy2"), "id")
     } else {
    # data2 <- aggregate(. ~ strata2 + id, data = data2, FUN = sum) # DEBUG: wrong col names
-     data2 <- aggregate(data2[, c("y2", "w2", "ones2", "wy2")], by = list(strata2 = data2$strata2, id = data2$id), FUN = sum)
+     data2 <- .delta.rowsum(data2, c("y2", "w2", "ones2", "wy2"),
+                            "id", "strata2")
+     names(data2)[names(data2) == "strata"] <- "strata2"
     }
 colnames(data2)[colnames(data2) == "ones2"] <- "nPSU2"
 data2$ones2 <- 1
@@ -464,7 +464,7 @@ n1 <- NROW(data1)
 # design2
 n2 <- NROW(data2)
 # common to design1 and design2
-nc <- sum(data$ones1 * data$ones2, na.rm = TRUE)
+nc <- sum(!is.na(data$ones1) & !is.na(data$ones2))
 # merge of design1 and design2 (nm = n1 + n2 - nc)
 nm <- NROW(data)
 # Overlap rate
@@ -515,7 +515,7 @@ VV <- estVar(mm)
 
 # Estimate the correlation between Y1 and Y2
 # Model covariance
-VV12 <- mean(VV[row(VV) != col(VV)])
+VV12 <- VV[1L, 2L]
 # Product of the square roots of the model variances 
 VV11sqVV22sq <- sqrt(prod(diag(VV)))
 # Correlation (standard difference form LDelta)

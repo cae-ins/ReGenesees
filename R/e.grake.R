@@ -41,7 +41,7 @@ calibrate.survey.design2<-function(design, formula, population,
   expit<-function(x) 1-1/(1+exp(x))
   
   ## calibration to population totals
-  mm<-model.matrix(formula, model.frame(formula, model.frame(design)))
+  mm<-.rg.model.matrix(formula, model.frame(formula, model.frame(design)))
   ww<-weights(design)
   
   if (!is.null(aggregate.stage)){
@@ -96,36 +96,68 @@ calibrate.survey.design2<-function(design, formula, population,
 grake<-function(mm,ww,calfun,eta=rep(0,NCOL(mm)),bounds,population,epsilon, verbose,maxit){
 
   sample.total<-colSums(mm*ww)
-  ## No longer needed: ReGenesees now IMPORTS MASS
-  # require(MASS) ##ginv
   if(!inherits(calfun,"calfun")) stop("'calfun' must be of class 'calfun'")
   
   Fm1<-calfun$Fm1
   dF<-calfun$dF
 
   xeta<-drop(mm%*%eta)
-  g<-1+Fm1(xeta, bounds)
+  fm1<-Fm1(xeta, bounds)
+  g<-1+fm1
+  deriv<-dF(xeta, bounds)
 
-  iter<-1
+  iter<-0L
+  step.halvings<-0L
+  solvers<-character(0)
 
   repeat({
-    Tmat<-crossprod(mm*ww*dF(xeta, bounds), mm)
+    iter<-iter+1L
+    Tmat<-crossprod(mm*ww*deriv, mm)
+    misfit<-population-sample.total-colSums(mm*ww*fm1)
+    current.error<-max(abs(misfit)/(1+abs(population)))
+    deta<-.calibration.solve(Tmat, misfit, tol=256*.Machine$double.eps)
+    solvers<-c(solvers, attr(deta, "solver"))
+    deta<-as.numeric(deta)
 
-    misfit<-(population-sample.total-colSums(mm*ww*Fm1(xeta, bounds)))
-    deta<-ginv(Tmat, tol=256*.Machine$double.eps)%*%misfit
-    eta<-eta+deta
-
-    xeta<- drop(mm%*%eta)
-    g<-1+Fm1(xeta, bounds)
-    misfit<-(population-sample.total-colSums(mm*ww*Fm1(xeta, bounds)))
+    step<-1
+    accepted<-FALSE
+    for (backtrack in 0:30) {
+      eta.new<-eta+step*deta
+      xeta.new<-drop(mm%*%eta.new)
+      fm1.new<-Fm1(xeta.new, bounds)
+      g.new<-1+fm1.new
+      if (all(is.finite(g.new), is.finite(fm1.new))) {
+        misfit.new<-population-sample.total-colSums(mm*ww*fm1.new)
+        new.error<-max(abs(misfit.new)/(1+abs(population)))
+        if (is.finite(new.error) &&
+            (new.error<=current.error || step<=2^-30)) {
+          accepted<-TRUE
+          break
+        }
+      }
+      step<-step/2
+      step.halvings<-step.halvings+1L
+    }
+    if (!accepted) {
+      eta.new<-eta
+      xeta.new<-xeta
+      fm1.new<-fm1
+      g.new<-g
+      misfit.new<-misfit
+    }
+    eta<-eta.new
+    xeta<-xeta.new
+    fm1<-fm1.new
+    g<-g.new
+    misfit<-misfit.new
+    deriv<-dF(xeta, bounds)
     
     if (verbose)
       print(misfit)
 
     if (all(abs(misfit)/(1+abs(population))<epsilon)) break
 
-    iter <- iter+1
-    if (iter>maxit) {
+    if (iter>=maxit) {
        achieved<-max((abs(misfit)/(1+abs(population))))
        warning("Failed to converge: eps=",achieved," in ",iter," iterations")
        attr(g,"failed")<-achieved
@@ -134,5 +166,8 @@ grake<-function(mm,ww,calfun,eta=rep(0,NCOL(mm)),bounds,population,epsilon, verb
   })
 
   attr(g,"eta")<-eta
+  attr(g,"iterations")<-iter
+  attr(g,"step.halvings")<-step.halvings
+  attr(g,"solvers")<-unique(solvers)
   g
 }
